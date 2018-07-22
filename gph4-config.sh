@@ -4,12 +4,19 @@
 camera_ssids=""
 networkmanager="unset"
 nm_candidates=( "nmcli" )
+wifi_interface=""
 verbose=0
 
 # Performs a GET request with curl, only shows output if there are errors (HTTP
 # errors don't count as "errors" here.
 function quiet_get {
 	curl --silent --show-error --output /dev/null $1
+}
+
+function echo_verbose {
+	if [ $verbose == 1 ]; then
+		echo $1
+	fi
 }
 
 # Shows help information
@@ -38,19 +45,46 @@ function detect_network_manager {
 		echo $nm_candidates
 		exit 1
 	else
-		if [ verbose != 0 ]; then
-			echo "Using $networkmanager as network manager"
-		fi
+		echo_verbose "Using $networkmanager as network manager"
 	fi
 }
 
+# Connects to a network with nmcli. First argument is the SSID, second argument
+# is the password, third argument is the interface.
+function connect_nmcli {
+	echo "Connecting to $1..."
+	#nmcli dev wifi connect $1 password $2 iface $3
+}
+
+# Connect to a network. First argument is the SSID, second argument is the
+# password, third argument is the interface.
+function connect {
+	case $networkmanager in
+		"nmcli") connect_nmcli $1 $2 $3; return;;
+	esac
+}
+
+function get_interface_nmcli {
+	wifi_interfaces=$(nmcli device status | grep wifi)
+	IFS=' ' read -ra data <<< "$wifi_interfaces"
+	echo "${data[0]}"
+}
+
+function detect_wifi_interface {
+	case $networkmanager in
+		"nmcli") interface=$(get_interface_nmcli);;
+	esac
+	echo_verbose "Using WiFi interface $interface"
+}
+
 OPTIND=1 # Reset getopt, if it's been used in the shell previously
-while getopts "h?vc:" opt; do
-	case "$opt" in
+while getopts "hvc:" opt; do
+	case $opt in
 		h) show_help; exit 0;;
-		c) camera_ssids=$OPTARG;;
 		v) verbose=1;;
+		c) camera_ssids=$OPTARG;;
 	esac
 done
 
-echo $camera_ssids
+detect_network_manager
+detect_wifi_interface
