@@ -1,7 +1,9 @@
 #!/bin/bash
 
-OPTIND=1
+# Some global variables
 camera_ssids=""
+networkmanager="unset"
+nm_candidates=( "nmcli" )
 verbose=0
 
 # Performs a GET request with curl, only shows output if there are errors (HTTP
@@ -21,8 +23,6 @@ function show_help {
 # Detect what network manager software is being used. On Ubuntu (and most other
 # Linux distros) this will be NetworkManager (nmcli). On Mac, this will be
 # networksetup.
-networkmanager="unset"
-nm_candidates=( "nmcli" )
 function detect_network_manager {
 	for candidate in "${nm_candidates[@]}"; do
 		which $candidate > /dev/null
@@ -44,6 +44,7 @@ function detect_network_manager {
 	fi
 }
 
+OPTIND=1 # Reset getopt, if it's been used in the shell previously
 while getopts "h?vc:" opt; do
 	case "$opt" in
 		h) show_help; exit 0;;
