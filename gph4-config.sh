@@ -2,7 +2,7 @@
 
 # Some global variables
 camera_ssids=""
-networkmanager="unset"
+networkmanager=""
 nm_candidates=( "nmcli" )
 password=""
 wifi_interface=""
@@ -15,7 +15,7 @@ function quiet_get {
 }
 
 function echo_verbose {
-	if [ $verbose == 1 ]; then
+	if [ $verbose -eq 1 ]; then
 		echo $1
 	fi
 }
@@ -41,8 +41,7 @@ function detect_network_manager {
 			break
 		fi
 	done
-
-	if [ $networkmanager = "unset" ]; then
+	if [ $networkmanager = "" ]; then
 		echo "No supported network managers detected!"
 		echo "Supported network managers are:"
 		echo $nm_candidates
@@ -55,7 +54,6 @@ function detect_network_manager {
 # Connects to a network with nmcli. First argument is the SSID, second argument
 # is the password, third argument is the interface.
 function connect_nmcli {
-	echo "Connecting to $1..."
 	nmcli connection up "$1" &> /dev/null
 	if [ $? -eq 10 ]; then
 		echo_verbose "No existing NetworkManager profile for this GoPro found"
@@ -67,6 +65,7 @@ function connect_nmcli {
 # Connect to a network. First argument is the SSID, second argument is the
 # password, third argument is the interface.
 function connect {
+	echo "Connecting to $1..."
 	case $networkmanager in
 		"nmcli") connect_nmcli $1 $2 $3; return;;
 	esac
@@ -99,7 +98,6 @@ if [ $OPTIND -eq 1 ]; then
 fi
 
 detect_network_manager
-
 for ssid in $camera_ssids; do
 	connect $ssid $password $interface
 	start_recording
