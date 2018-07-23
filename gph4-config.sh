@@ -93,6 +93,10 @@ while getopts "hvc:p:" opt; do
 		p) password=$OPTARG;;
 	esac
 done
+if [ $OPTIND -eq 1 ]; then
+	show_help
+	exit 1
+fi
 
 detect_network_manager
 
