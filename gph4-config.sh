@@ -25,6 +25,8 @@ function show_help {
 	echo "gph4-config"
 	echo "==========="
 	echo " -c [SSIDs]    SSIDs for the GoPro cameras you want to configure"
+	echo " -h            Show this help information"
+	echo " -p [PASS]     Set the WiFi password for the cameras"
 	echo " -v            Enable verbose logging"
 }
 
