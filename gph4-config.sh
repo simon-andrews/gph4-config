@@ -1,11 +1,15 @@
 #!/bin/bash
 
+# TODO: Date and time setting
+# TODO: Battery status
+
 # Some global variables
 camera_ssids=""
 networkmanager=""
 nm_candidates=( "nmcli" )
 old_connection=""
 password=""
+should_update_date_time=0
 target_fps=""
 target_orientation=""
 target_resolution=""
@@ -37,6 +41,7 @@ function show_help {
 	echo " -r [RES]      Set resolution. Only resolutions that work on Hero 4"
 	echo "               Black AND Silver are supported. Those are: 4k, 2.7k,"
 	echo "               1080p_sv (superview), 1080p, 960p, 720p_sv, 720p, wvga"
+	echo " -t            Synchronize the camera clock with your computer"
 	echo " -v            Enable verbose messages"
 }
 
@@ -174,12 +179,18 @@ function set_fps {
 	quiet_get "http://10.5.5.9/gp/gpControl/setting/3/$argument"
 }
 
+function update_date_time {
+	x=$(printf "%%%02x%%%02x%%%02x%%%02x%%%02x%%%02x" $(date "+%y %m %d %H %M %S"))
+	quiet_get "http://10.5.5.9/gp/gpControl/command/setup/date_time?p=${x}"
+}
+
 OPTIND=1 # Reset getopt, if it's been used in the shell previously
-while getopts "hvc:f:o:p:r:" opt; do
+while getopts "hvdc:f:o:p:r:" opt; do
 	case $opt in
 		h) show_help; exit 0;;
 		v) verbose=1;;
 		c) camera_ssids=$OPTARG;;
+		d) should_update_date_time=1;;
 		f) target_fps=$OPTARG;;
 		o) target_orientation=$OPTARG;;
 		p) password=$OPTARG;;
@@ -204,6 +215,9 @@ for ssid in $camera_ssids; do
 	fi
 	if [ "$target_fps" != "" ]; then
 		set_fps $target_fps
+	fi
+	if [ "$should_update_date_time" -eq 1 ]; then
+		update_date_time
 	fi
 done
 restore_old_connection
