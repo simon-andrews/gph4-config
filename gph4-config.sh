@@ -6,6 +6,7 @@ networkmanager=""
 nm_candidates=( "nmcli" )
 password=""
 target_orientation=""
+target_resolution=""
 wifi_interface=""
 verbose=0
 
@@ -107,13 +108,32 @@ function set_orientation {
 	quiet_get "http://10.5.5.9/gp/gpControl/setting/52/$argument"
 }
 
+function set_video_resolution {
+	argument=-1
+	# sv = superview
+	case $1 in
+		4k)       argument=1;;
+		2.7k)     argument=4;;
+		1440p)    argument=7;;
+		1080p_sv) argument=8;;
+		1080p)    argument=9;;
+		960p)     argument=10;;
+		720p_sv)  argument=11;;
+		720p)     argument=12;;
+		wvga)     argument=13;;
+		*)        echo "Invalid resolution $1!"; exit 1;;
+	esac
+	quiet_get "http://10.5.5.9/gp/gpControl/setting/2/$argument"
+}
+
 OPTIND=1 # Reset getopt, if it's been used in the shell previously
-while getopts "hvc:o:p:" opt; do
+while getopts "hvc:o:r:p:" opt; do
 	case $opt in
 		h) show_help; exit 0;;
 		v) verbose=1;;
 		c) camera_ssids=$OPTARG;;
 		o) target_orientation=$OPTARG;;
+		r) target_resolution=$OPTARG;;
 		p) password=$OPTARG;;
 	esac
 done
@@ -127,5 +147,8 @@ for ssid in $camera_ssids; do
 	connect $ssid $password $interface
 	if [ "$target_orientation" != "" ]; then
 		set_orientation $target_orientation
+	fi
+	if [ "$target_resolution" != "" ]; then
+		set_video_resolution $target_resolution
 	fi
 done
