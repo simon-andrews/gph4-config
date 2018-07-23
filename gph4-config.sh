@@ -29,8 +29,12 @@ function show_help {
 	echo "==========="
 	echo " -c [SSIDs]    SSIDs for the GoPro cameras you want to configure"
 	echo " -h            Show this help information"
+	echo " -o [SETTING]  How should the GoPro orient itself (up/down/gyro)"
 	echo " -p [PASS]     Set the WiFi password for the cameras"
-	echo " -v            Enable verbose logging"
+	echo " -r [RES]      Set resolution. Only resolutions that work on Hero 4"
+	echo "               Black AND Silver are supported. Those are: 4k, 2.7k,"
+	echo "               1080p_sv (superview), 1080p, 960p, 720p_sv, 720p, wvga"
+	echo " -v            Enable verbose messages"
 }
 
 # Detect what network manager software is being used. On Ubuntu (and most other
@@ -100,11 +104,8 @@ function set_orientation {
 		up)   argument=1;;
 		down) argument=2;;
 		gyro) argument=0;;
+		*)    echo "Invalid orientation $1!"; exit 1;;
 	esac
-	if [ $argument -eq -1 ]; then
-		echo "Invalid orientation $1!"
-		exit 1
-	fi
 	quiet_get "http://10.5.5.9/gp/gpControl/setting/52/$argument"
 }
 
