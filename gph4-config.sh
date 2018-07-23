@@ -4,6 +4,7 @@
 camera_ssids=""
 networkmanager="unset"
 nm_candidates=( "nmcli" )
+password=""
 wifi_interface=""
 verbose=0
 
@@ -53,7 +54,12 @@ function detect_network_manager {
 # is the password, third argument is the interface.
 function connect_nmcli {
 	echo "Connecting to $1..."
-	#nmcli dev wifi connect $1 password $2 iface $3
+	nmcli connection up "$1" &> /dev/null
+	if [ $? -eq 10 ]; then
+		echo_verbose "No existing NetworkManager profile for this GoPro found"
+		echo_verbose "Making a new one..."
+		nmcli device wifi connect "$1" password "$2"
+	fi
 }
 
 # Connect to a network. First argument is the SSID, second argument is the
@@ -64,32 +70,19 @@ function connect {
 	esac
 }
 
-# Uses nmcli to list interfaces, and use the first listed one that supports
-# WiFi. This is a bit fragile, but it should work on most systems. String
-# manipulation in bash is painful so "good enough" is all I really care to do
-# here.
-function get_interface_nmcli {
-	wifi_interfaces=$(nmcli device status | grep wifi)
-	IFS=' ' read -ra data <<< "$wifi_interfaces"
-	echo "${data[0]}"
-}
-
-# Figure out what WiFi interface to use for connections.
-function detect_wifi_interface {
-	case $networkmanager in
-		"nmcli") interface=$(get_interface_nmcli);;
-	esac
-	echo_verbose "Using WiFi interface $interface"
-}
 
 OPTIND=1 # Reset getopt, if it's been used in the shell previously
-while getopts "hvc:" opt; do
+while getopts "hvc:p:" opt; do
 	case $opt in
 		h) show_help; exit 0;;
 		v) verbose=1;;
 		c) camera_ssids=$OPTARG;;
+		p) password=$OPTARG;;
 	esac
 done
 
 detect_network_manager
-detect_wifi_interface
+
+for ssid in $camera_ssids; do
+	connect $ssid $password $interface
+done
