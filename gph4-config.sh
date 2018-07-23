@@ -5,12 +5,14 @@ camera_ssids=""
 networkmanager=""
 nm_candidates=( "nmcli" )
 password=""
+target_orientation=""
 wifi_interface=""
 verbose=0
 
 # Performs a GET request with curl, only shows output if there are errors (HTTP
 # errors don't count as "errors" here.
 function quiet_get {
+	echo_verbose "GET $1"
 	curl --silent --show-error --output /dev/null $1
 }
 
@@ -41,7 +43,7 @@ function detect_network_manager {
 			break
 		fi
 	done
-	if [ $networkmanager = "" ]; then
+	if [ "$networkmanager" = "" ]; then
 		echo "No supported network managers detected!"
 		echo "Supported network managers are:"
 		echo $nm_candidates
@@ -69,26 +71,49 @@ function connect {
 	case $networkmanager in
 		"nmcli") connect_nmcli $1 $2 $3; return;;
 	esac
+	echo "Done connecting!"
 }
 
-# Instructs the GoPro to start recording video
+function enter_video_mode {
+	echo_verbose "Entering video mode..."
+	quiet_get "http://10.5.5.9/gp/gpControl/command/mode?p=0"
+}
+
+# Enters video mode and triggers the shutter, instructing the GoPro to start
+# recording video
 function start_recording {
-	echo_verbose "Starting to record at $(date +%H:%M:%S)"
+	enter_video_mode
+	echo "Starting to record at $(date +%H:%M:%S)"
 	quiet_get "http://10.5.5.9/gp/gpControl/command/shutter?p=1"
 }
 
 # Instructs the GoPro to stop recording video
 function stop_recording {
-	echo_verbose "Stopping recording at $(date +%H:%M:%S)"
+	echo "Stopping recording at $(date +%H:%M:%S)"
 	quiet_get "http://10.5.5.9/gp/gpControl/command/shutter?p=0"
 }
 
+function set_orientation {
+	argument=-1
+	case $1 in
+		up)   argument=1;;
+		down) argument=2;;
+		gyro) argument=0;;
+	esac
+	if [ $argument -eq -1 ]; then
+		echo "Invalid orientation $1!"
+		exit 1
+	fi
+	quiet_get "http://10.5.5.9/gp/gpControl/setting/52/$argument"
+}
+
 OPTIND=1 # Reset getopt, if it's been used in the shell previously
-while getopts "hvc:p:" opt; do
+while getopts "hvc:o:p:" opt; do
 	case $opt in
 		h) show_help; exit 0;;
 		v) verbose=1;;
 		c) camera_ssids=$OPTARG;;
+		o) target_orientation=$OPTARG;;
 		p) password=$OPTARG;;
 	esac
 done
@@ -100,7 +125,7 @@ fi
 detect_network_manager
 for ssid in $camera_ssids; do
 	connect $ssid $password $interface
-	start_recording
-	sleep 3
-	stop_recording
+	if [ "$target_orientation" != "" ]; then
+		set_orientation $target_orientation
+	fi
 done
