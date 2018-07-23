@@ -70,6 +70,17 @@ function connect {
 	esac
 }
 
+# Instructs the GoPro to start recording video
+function start_recording {
+	echo_verbose "Starting to record at $(date +%H:%M:%S)"
+	quiet_get "http://10.5.5.9/gp/gpControl/command/shutter?p=1"
+}
+
+# Instructs the GoPro to stop recording video
+function stop_recording {
+	echo_verbose "Stopping recording at $(date +%H:%M:%S)"
+	quiet_get "http://10.5.5.9/gp/gpControl/command/shutter?p=0"
+}
 
 OPTIND=1 # Reset getopt, if it's been used in the shell previously
 while getopts "hvc:p:" opt; do
@@ -85,4 +96,7 @@ detect_network_manager
 
 for ssid in $camera_ssids; do
 	connect $ssid $password $interface
+	start_recording
+	sleep 3
+	stop_recording
 done
