@@ -4,7 +4,9 @@
 camera_ssids=""
 networkmanager=""
 nm_candidates=( "nmcli" )
+old_connection=""
 password=""
+target_fps=""
 target_orientation=""
 target_resolution=""
 wifi_interface=""
@@ -56,6 +58,35 @@ function detect_network_manager {
 	else
 		echo_verbose "Using $networkmanager as network manager"
 	fi
+}
+
+function get_current_connection_nmcli {
+	connections=$(nmcli connection | grep 802)
+	IFS=' ' read -ra data <<< "$connections"
+	# active connections float to the top, so we're _probably_ connected to the
+	# first thing in the list
+	for word in "${data[@]}"; do
+		if [ "${#word}" -eq 36 ]; then
+			echo "${word}"
+			return
+		fi
+	done
+}
+
+function get_current_connection {
+	case "$networkmanager" in
+		"nmcli") echo $(get_current_connection_nmcli);;
+	esac
+}
+
+function save_old_connection {
+	old_connection=$(get_current_connection)
+	echo_verbose "Made a note that the current connection is $old_connection"
+}
+
+function restore_old_connection {
+	echo_verbose "Re-connecting to $old_connection"
+	connect $old_connection
 }
 
 # Connects to a network with nmcli. First argument is the SSID, second argument
@@ -127,15 +158,31 @@ function set_video_resolution {
 	quiet_get "http://10.5.5.9/gp/gpControl/setting/2/$argument"
 }
 
+function set_fps {
+	argument=-1
+	case $1 in
+		100) argument=2;;
+		60)  argument=5;;
+		50)  argument=6;;
+		48)  argument=7;;
+		30)  argument=8;;
+		#25)  argument=9;; # Seems to just fall through to 10=24FPS on the camera
+		24)  argument=10;; # Works fine, even though wiki says it shouldn't
+		*)   echo "Invalid FPS $1!"; exit 1;;
+	esac
+	quiet_get "http://10.5.5.9/gp/gpControl/setting/3/$argument"
+}
+
 OPTIND=1 # Reset getopt, if it's been used in the shell previously
-while getopts "hvc:o:r:p:" opt; do
+while getopts "hvc:f:o:p:r:" opt; do
 	case $opt in
 		h) show_help; exit 0;;
 		v) verbose=1;;
 		c) camera_ssids=$OPTARG;;
+		f) target_fps=$OPTARG;;
 		o) target_orientation=$OPTARG;;
-		r) target_resolution=$OPTARG;;
 		p) password=$OPTARG;;
+		r) target_resolution=$OPTARG;;
 	esac
 done
 if [ $OPTIND -eq 1 ]; then
@@ -144,12 +191,18 @@ if [ $OPTIND -eq 1 ]; then
 fi
 
 detect_network_manager
+save_old_connection
 for ssid in $camera_ssids; do
 	connect $ssid $password $interface
+	echo "Applying configuration..."
 	if [ "$target_orientation" != "" ]; then
 		set_orientation $target_orientation
 	fi
 	if [ "$target_resolution" != "" ]; then
 		set_video_resolution $target_resolution
 	fi
+	if [ "$target_fps" != "" ]; then
+		set_fps $target_fps
+	fi
 done
+restore_old_connection
