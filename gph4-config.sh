@@ -64,12 +64,17 @@ function connect {
 	esac
 }
 
+# Uses nmcli to list interfaces, and use the first listed one that supports
+# WiFi. This is a bit fragile, but it should work on most systems. String
+# manipulation in bash is painful so "good enough" is all I really care to do
+# here.
 function get_interface_nmcli {
 	wifi_interfaces=$(nmcli device status | grep wifi)
 	IFS=' ' read -ra data <<< "$wifi_interfaces"
 	echo "${data[0]}"
 }
 
+# Figure out what WiFi interface to use for connections.
 function detect_wifi_interface {
 	case $networkmanager in
 		"nmcli") interface=$(get_interface_nmcli);;
