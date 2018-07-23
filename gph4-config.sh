@@ -30,6 +30,7 @@ function show_help {
 	echo "gph4-config"
 	echo "==========="
 	echo " -c [SSIDs]    SSIDs for the GoPro cameras you want to configure"
+	echo " -f [FPS]      Set frames/second. Options are 100, 60, 50, 48, 30, 24"
 	echo " -h            Show this help information"
 	echo " -o [SETTING]  How should the GoPro orient itself (up/down/gyro)"
 	echo " -p [PASS]     Set the WiFi password for the cameras"
