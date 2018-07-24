@@ -81,6 +81,7 @@ function get_current_connection_nmcli {
 function get_current_connection {
 	case "$networkmanager" in
 		"nmcli") echo $(get_current_connection_nmcli);;
+		*)       echo "Unrecognized network manager $networkmanager!"; exit 1;;
 	esac
 }
 
@@ -112,8 +113,9 @@ function connect_nmcli {
 # password, third argument is the interface.
 function connect {
 	echo "Connecting to $1..."
-	case $networkmanager in
-		"nmcli") connect_nmcli $1 $2 $3; return;;
+	case "$networkmanager" in
+		"nmcli") echo "yeet";; #connect_nmcli $1 $2 $3; return;;
+		*)       echo "Unrecognized network manager $networkmanager!"; exit 1;;
 	esac
 	echo "Done connecting!"
 }
@@ -145,7 +147,7 @@ function set_orientation {
 		up)   argument=1;;
 		down) argument=2;;
 		gyro) argument=0;;
-		*)    echo "Invalid orientation $1!"; exit 1;;
+		*)    echo "Invalid orientation $1!"; return;;
 	esac
 	quiet_get "http://10.5.5.9/gp/gpControl/setting/52/$argument"
 }
@@ -164,7 +166,7 @@ function set_video_resolution {
 		720p_sv)  argument=11;;
 		720p)     argument=12;;
 		wvga)     argument=13;;
-		*)        echo "Invalid resolution $1!"; exit 1;;
+		*)        echo "Invalid resolution $1!"; return;;
 	esac
 	quiet_get "http://10.5.5.9/gp/gpControl/setting/2/$argument"
 }
@@ -180,7 +182,7 @@ function set_fps {
 		30)  argument=8;;
 		#25)  argument=9;; # Seems to just fall through to 10=24FPS on the camera
 		24)  argument=10;; # Works fine, even though wiki says it shouldn't
-		*)   echo "Invalid FPS $1!"; exit 1;;
+		*)   echo "Invalid FPS $1!"; return;;
 	esac
 	quiet_get "http://10.5.5.9/gp/gpControl/setting/3/$argument"
 }
