@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# TODO: Date and time setting
-# TODO: Battery status
-
 # Some global variables
 camera_ssids=""
 networkmanager=""
@@ -66,6 +63,7 @@ function detect_network_manager {
 	fi
 }
 
+# Echos whatever network nmcli is currently connected to
 function get_current_connection_nmcli {
 	connections=$(nmcli connection | grep 802)
 	IFS=' ' read -ra data <<< "$connections"
@@ -79,17 +77,21 @@ function get_current_connection_nmcli {
 	done
 }
 
+# Echo whatever we're currently connected to.
 function get_current_connection {
 	case "$networkmanager" in
 		"nmcli") echo $(get_current_connection_nmcli);;
 	esac
 }
 
+# Find the current connection and make note of it so we can reconnect to it
+# later
 function save_old_connection {
 	old_connection=$(get_current_connection)
 	echo_verbose "Made a note that the current connection is $old_connection"
 }
 
+# Reconnect to whatever network we used to be connected to.
 function restore_old_connection {
 	echo_verbose "Re-connecting to $old_connection"
 	connect $old_connection
@@ -116,6 +118,7 @@ function connect {
 	echo "Done connecting!"
 }
 
+# Tell the GoPro to enter video mode
 function enter_video_mode {
 	echo_verbose "Entering video mode..."
 	quiet_get "http://10.5.5.9/gp/gpControl/command/mode?p=0"
@@ -135,6 +138,7 @@ function stop_recording {
 	quiet_get "http://10.5.5.9/gp/gpControl/command/shutter?p=0"
 }
 
+# Set the orientation of the GoPro UI (rightside-up, upside-down, gyro based)
 function set_orientation {
 	argument=-1
 	case $1 in
@@ -146,6 +150,7 @@ function set_orientation {
 	quiet_get "http://10.5.5.9/gp/gpControl/setting/52/$argument"
 }
 
+# Set video resolution. "sv" = SuperView
 function set_video_resolution {
 	argument=-1
 	# sv = superview
@@ -164,6 +169,7 @@ function set_video_resolution {
 	quiet_get "http://10.5.5.9/gp/gpControl/setting/2/$argument"
 }
 
+# Set video FPS
 function set_fps {
 	argument=-1
 	case $1 in
@@ -179,6 +185,7 @@ function set_fps {
 	quiet_get "http://10.5.5.9/gp/gpControl/setting/3/$argument"
 }
 
+# Synchronize the GoPro's time with the computer's current time.
 function update_date_time {
 	x=$(printf "%%%02x%%%02x%%%02x%%%02x%%%02x%%%02x" $(date "+%y %m %d %H %M %S"))
 	quiet_get "http://10.5.5.9/gp/gpControl/command/setup/date_time?p=${x}"
