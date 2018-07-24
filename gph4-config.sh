@@ -114,7 +114,7 @@ function connect_nmcli {
 function connect {
 	echo "Connecting to $1..."
 	case "$networkmanager" in
-		"nmcli") echo "yeet";; #connect_nmcli $1 $2 $3; return;;
+		"nmcli") connect_nmcli $1 $2 $3; return;;
 		*)       echo "Unrecognized network manager $networkmanager!"; exit 1;;
 	esac
 	echo "Done connecting!"
