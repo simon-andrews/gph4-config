@@ -2,6 +2,13 @@ gph4-config
 ===========
 gph4-config is a script for applying settings across a set of GoPro Hero 4 cameras. Both the Black and Silver models are supported. gph4-config works by connecting to the wireless network of the camera, then sending commands over HTTP.
 
+Currently, only [NetworkManager](https://en.wikipedia.org/wiki/NetworkManager) is supported for connecting to the GoPro cameras wirelessly. Support for Macs (with networksetup) and a "manual" mode where the script pauses and lets you connect however you please is planned.
+
+This was tested with:
+ * Ubuntu 17.10
+ * NetworkManager 1.8.4
+ * GoPro Hero 4 firmware versions 3.00 and 5.00
+
 Set up
 ------
  1. Power on your GoPro.
